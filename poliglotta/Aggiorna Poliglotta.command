@@ -19,12 +19,18 @@ main() {
 
   TMP=$(mktemp -d) || fail "impossibile creare una cartella temporanea."
   trap 'rm -rf "$TMP"' EXIT
-  curl -fsSL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Poliglotta' \
-    "$API/repos/$REPO/releases/latest" -o "$TMP/rel.json" || fail "GitHub non raggiungibile."
-  REMOTE=$(val tag_name "$TMP/rel.json"); REMOTE=${REMOTE#v}; REMOTE=${REMOTE#V}
-  URL=$(grep -o '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]*\.zip"' "$TMP/rel.json" | head -1 | sed 's/.*"\(http[^"]*\)"$/\1/')
+  if curl -fsSL -H 'Accept: application/vnd.github+json' -H 'User-Agent: Poliglotta' \
+    "$API/repos/$REPO/releases/latest" -o "$TMP/rel.json" 2>/dev/null; then
+    REMOTE=$(val tag_name "$TMP/rel.json"); REMOTE=${REMOTE#v}; REMOTE=${REMOTE#V}
+    URL=$(grep -o '"browser_download_url"[[:space:]]*:[[:space:]]*"[^"]*\.zip"' "$TMP/rel.json" | head -1 | sed 's/.*"\(http[^"]*\)"$/\1/')
+  else
+    # GitHub limita le richieste anonime (60 all'ora): leggo la versione dal file pubblico del repository.
+    curl -fsSL -H 'User-Agent: Poliglotta' "https://raw.githubusercontent.com/$REPO/main/poliglotta/manifest.json" \
+      -o "$TMP/man.json" || fail "GitHub non raggiungibile."
+    REMOTE=$(val version "$TMP/man.json")
+  fi
+  URL=${URL:-https://github.com/$REPO/releases/latest/download/Poliglotta.zip}
   if ! newer "$REMOTE" "$LOCAL"; then echo "Poliglotta è già aggiornata."; pausa; exit 0; fi
-  [ -n "$URL" ] || fail "la versione $REMOTE non contiene il file zip."
 
   echo "Scarico la versione $REMOTE..."
   curl -fsSL -H 'User-Agent: Poliglotta' "$URL" -o "$TMP/p.zip" || fail "download non riuscito."

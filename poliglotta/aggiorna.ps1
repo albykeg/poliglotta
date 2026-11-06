@@ -57,20 +57,28 @@ try {
 
   $local = (Get-Content -LiteralPath (Join-Path $dir 'manifest.json') -Raw | ConvertFrom-Json).version
   Write-Host "Versione installata: $local"
-  $release = Invoke-RestMethod -Uri "$api/repos/$($cfg.repo)/releases/latest" -Headers $headers -UseBasicParsing
-  $remote = ([string]$release.tag_name) -replace '^[vV]', ''
+  $zipUrl = $null
+  try {
+    $release = Invoke-RestMethod -Uri "$api/repos/$($cfg.repo)/releases/latest" -Headers $headers -UseBasicParsing
+    $remote = ([string]$release.tag_name) -replace '^[vV]', ''
+    $asset = $release.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1
+    if ($asset) { $zipUrl = $asset.browser_download_url }
+  } catch {
+    # GitHub limita le richieste anonime (60 all'ora): leggo la versione dal file pubblico del repository.
+    $rawText = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$($cfg.repo)/main/poliglotta/manifest.json" -Headers @{ 'User-Agent' = 'Poliglotta' } -UseBasicParsing).Content
+    $remote = [string](($rawText | ConvertFrom-Json).version)
+  }
+  if (-not $zipUrl) { $zipUrl = "https://github.com/$($cfg.repo)/releases/latest/download/Poliglotta.zip" }
   if ([version]$remote -le [version]$local) {
     Write-Host 'Poliglotta è già aggiornata.'
     Fine 0
   }
-  $asset = $release.assets | Where-Object { $_.name -like '*.zip' } | Select-Object -First 1
-  if (-not $asset) { throw "La versione $remote non contiene il file zip." }
 
   Write-Host "Scarico la versione $remote..."
   $tmp = Join-Path ([IO.Path]::GetTempPath()) ('poliglotta-' + [guid]::NewGuid().ToString('N'))
   New-Item -ItemType Directory -Path $tmp | Out-Null
   $zip = Join-Path $tmp 'poliglotta.zip'
-  Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $zip -Headers @{ 'User-Agent' = 'Poliglotta' } -UseBasicParsing
+  Invoke-WebRequest -Uri $zipUrl -OutFile $zip -Headers @{ 'User-Agent' = 'Poliglotta' } -UseBasicParsing
   $out = Join-Path $tmp 'x'
   Expand-Archive -LiteralPath $zip -DestinationPath $out -Force
   $src = Join-Path $out 'poliglotta'

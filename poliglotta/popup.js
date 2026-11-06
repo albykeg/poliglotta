@@ -69,7 +69,7 @@ async function init() {
   renderUpdate(upd.update);
   $('checkBtn').addEventListener('click', async () => {
     $('checkBtn').textContent = 'Controllo…';
-    const st = await chrome.runtime.sendMessage({ type: 'checkUpdates' }).catch(() => null);
+    const st = await chrome.runtime.sendMessage({ type: 'checkUpdates', force: true }).catch(() => null);
     renderUpdate(st);
     $('checkBtn').textContent = st && !st.repo ? 'Aggiornamenti non configurati'
       : st && st.error ? 'GitHub non raggiungibile, riprova'

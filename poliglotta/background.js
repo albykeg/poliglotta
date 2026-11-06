@@ -239,16 +239,28 @@ async function checkUpdates() {
       const res = await fetch(`${api}/repos/${cfg.repo}/releases/latest`, {
         headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store', credentials: 'omit'
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const rel = await res.json();
-      const version = String(rel.tag_name || '').replace(/^v/i, '');
-      const asset = (rel.assets || []).find((a) => /\.zip$/i.test(a.name || ''));
-      update.available = version && cmpVer(version, update.installed || update.running) > 0 ? {
-        version,
-        notes: String(rel.body || '').slice(0, 800),
-        page: rel.html_url || null,
-        zip: asset ? asset.browser_download_url : null
-      } : null;
+      let found = null;
+      if (res.ok) {
+        const rel = await res.json();
+        const asset = (rel.assets || []).find((a) => /\.zip$/i.test(a.name || ''));
+        found = {
+          version: String(rel.tag_name || '').replace(/^v/i, ''),
+          notes: String(rel.body || '').slice(0, 800),
+          page: rel.html_url || null,
+          zip: asset ? asset.browser_download_url : null
+        };
+      } else {
+        // GitHub limita le richieste anonime (60 all'ora per indirizzo): leggo la versione dal file pubblico.
+        const raw = await fetch(`https://raw.githubusercontent.com/${cfg.repo}/main/poliglotta/manifest.json`, { cache: 'no-store', credentials: 'omit' });
+        if (!raw.ok) throw new Error('HTTP ' + res.status);
+        found = {
+          version: String((await raw.json()).version || ''),
+          notes: '',
+          page: `https://github.com/${cfg.repo}/releases/latest`,
+          zip: `https://github.com/${cfg.repo}/releases/latest/download/Poliglotta.zip`
+        };
+      }
+      update.available = found.version && cmpVer(found.version, update.installed || update.running) > 0 ? found : null;
     } catch (e) {
       update.error = String((e && e.message) || e).slice(0, 120);
     }
@@ -277,6 +289,11 @@ ensureAlarms();
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.type !== 'checkUpdates') return false;
-  checkUpdates().then(sendResponse, () => sendResponse(null));
+  (async () => {
+    // Aprendo il popup controllo al massimo ogni 15 minuti; il pulsante "Controlla aggiornamenti" forza il controllo.
+    const { update } = await chrome.storage.local.get('update');
+    if (!msg.force && update && update.checked && Date.now() - update.checked < 15 * 60 * 1000) return checkDisk();
+    return checkUpdates();
+  })().then(sendResponse, () => sendResponse(null));
   return true;
 });

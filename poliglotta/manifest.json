@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Poliglotta – Traduttore per Messenger",
   "short_name": "Poliglotta",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Traduce i messaggi di Messenger nella tua lingua e le tue risposte nella lingua di ogni chat, rilevata in automatico. Gratis e senza limiti.",
   "permissions": [
     "storage",
@@ -11,7 +11,8 @@
   "host_permissions": [
     "https://translate.googleapis.com/*",
     "https://clients5.google.com/*",
-    "https://api.github.com/*"
+    "https://api.github.com/*",
+    "https://raw.githubusercontent.com/*"
   ],
   "background": {
     "service_worker": "background.js"
