@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>Poliglotta</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="" width="28" height="28">
+    <div class="title">
+      <strong>Poliglotta</strong>
+      <span>Traduttore per Messenger</span>
+    </div>
+    <label class="switch" title="Attiva o disattiva (Alt+T)">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </header>
+
+  <section id="upd" class="upd" hidden>
+    <b id="updTitle"></b>
+    <p id="updText"></p>
+    <pre id="updNotes" hidden></pre>
+    <div class="updBtns">
+      <button id="updReload" type="button" hidden>Apri pagina estensioni</button>
+      <a id="updLink" href="#" target="_blank" rel="noopener" hidden>Scarica a mano</a>
+    </div>
+  </section>
+
+  <main id="opts">
+    <label class="field">
+      <span>La tua lingua</span>
+      <select id="myLang"></select>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" id="incoming">
+      <span><b>Traduci i messaggi ricevuti</b><small>La traduzione compare sotto l'originale</small></span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" id="outgoing">
+      <span><b>Traduci le mie risposte</b><small>Invio traduce, Invio di nuovo invia, Esc annulla</small></span>
+    </label>
+
+    <label class="row">
+      <input type="checkbox" id="showOwn">
+      <span><b>Traduzione anche sotto i miei messaggi</b><small>Utile per rileggere cosa hai mandato</small></span>
+    </label>
+
+    <label class="keep">
+      <b>Mai tradurre</b>
+      <small>Link, email e nomi con la maiuscola sono già protetti. Aggiungi qui marchi, prodotti o nomi che usi spesso, separati da virgola.</small>
+      <textarea id="keepWords" rows="2" spellcheck="false" placeholder="Es. Projet, Fargo Rating, Michele"></textarea>
+      <span id="keepSaved" class="saved" aria-live="polite"></span>
+    </label>
+  </main>
+
+  <section class="stats">
+    <div><span>Oggi</span><b id="today">0</b></div>
+    <div><span>Totale</span><b id="total">0</b></div>
+    <div><span>Costo</span><b>0 €</b></div>
+  </section>
+
+  <footer>
+    La lingua di ogni chat si rileva da sola. Per cambiarla, usa il menu 🌐 sopra la casella di scrittura.
+  </footer>
+
+  <section class="diag">
+    <p class="ver"><span id="verText"></span> · <button id="checkBtn" type="button" class="linkish">Controlla aggiornamenti</button></p>
+    <button id="diagBtn" type="button">Copia diagnostica</button>
+    <p id="diagMsg">Se qualcosa non funziona: apri la chat su Facebook, premi qui e incolla il risultato a Claude. Non contiene il testo dei messaggi.</p>
+    <textarea id="diagOut" readonly hidden></textarea>
+  </section>
+
+  <script src="languages.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+# Pubblica automaticamente una nuova versione di Poliglotta.
+# Ogni volta che cambia qualcosa nella cartella poliglotta/ e il numero di versione nel manifest è nuovo,
+# crea una "Release" con il file Poliglotta.zip. Le estensioni già installate se ne accorgono da sole.
+name: Pubblica nuova versione
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'poliglotta/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pubblica:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Leggi la versione
+        id: v
+        run: echo "version=$(jq -r .version poliglotta/manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Crea lo zip e la release (solo se la versione è nuova)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.v.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "La versione $VERSION è già pubblicata: niente da fare."
+            exit 0
+          fi
+          chmod +x "poliglotta/Aggiorna Poliglotta.command"
+          zip -rq -X Poliglotta.zip poliglotta -x '*.DS_Store'
+          git log -1 --pretty=%B | grep -v -E '^(Co-Authored-By|Claude-Session|Signed-off-by):' > note.txt
+          gh release create "v$VERSION" Poliglotta.zip --title "Poliglotta $VERSION" --notes-file note.txt

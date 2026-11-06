@@ -1,0 +1,19 @@
+/* Traduzione mostrata sotto il messaggio originale, dentro la stessa bolla.
+   Usa un attributo + ::after: non aggiunge elementi alla pagina, così non interferisce con Facebook. */
+[data-pg-tr]::after {
+  content: attr(data-pg-tr);
+  display: block;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed color-mix(in srgb, currentColor 35%, transparent);
+  font-size: 0.92em;
+  font-style: italic;
+  line-height: 1.3;
+  opacity: 0.88;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+html.pg-off [data-pg-tr]::after {
+  display: none;
+}
